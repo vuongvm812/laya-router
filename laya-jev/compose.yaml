@@ -1,0 +1,34 @@
+services:
+  laya:
+    platform: linux/arm64
+    build:
+      context: ../laya
+      args:
+        TORCH_INDEX: cpu
+        TORCH_VERSION: "2.14.0"
+    command: ["laya-serve"]
+    init: true
+    ports:
+      - "127.0.0.1:${LAYA_PORT}:${LAYA_PORT}"
+    environment:
+      LAYA_HOST: 0.0.0.0
+      LAYA_PORT: "${LAYA_PORT}"
+      LAYA_DEVICE: cpu
+      LAYA_PRELOAD: "1"
+      LAYA_MODELS: "${LAYA_MODELS}"
+      LAYA_REVISION: reviewed
+      LAYA_MAX_LOADED: "1"
+      LAYA_AUTO_TASK: "0"
+      LAYA_THREADS: "4"
+      OMP_NUM_THREADS: "4"
+      LAYA_API_KEY: "${LAYA_API_KEY}"
+    volumes:
+      - model-cache:/home/laya/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:'+os.environ['LAYA_PORT']+'/health', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 15m
+volumes:
+  model-cache:
